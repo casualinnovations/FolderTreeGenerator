@@ -1,0 +1,99 @@
+﻿<Window x:Class="FolderTreeGenerator.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FolderTreeGenerator.UI"
+        xmlns:vm="clr-namespace:FolderTreeGenerator.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="Folder Tree Generator" Height="600" Width="900"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Panel: Folder Selection -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox Text="{Binding SelectedFolder, UpdateSourceTrigger=PropertyChanged}"
+                     IsReadOnly="True"
+                     VerticalContentAlignment="Center"
+                     Padding="5"/>
+
+            <Button Grid.Column="1" Content="Browse" 
+                    Command="{Binding BrowseFolderCommand}"
+                    Width="80" Margin="5,0,0,0" Padding="5"/>
+
+            <Button Grid.Column="2" Content="Filter Settings"
+                    Command="{Binding OpenFilterSettingsCommand}"
+                    Width="100" Margin="5,0,0,0" Padding="5"/>
+        </Grid>
+
+        <!-- Progress Bar -->
+        <Grid Grid.Row="1" Margin="0,0,0,10"
+              Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVis}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="{Binding StatusMessage}" Margin="0,0,0,5"/>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <ProgressBar Value="{Binding Progress, Mode=OneWay}" Height="20"/>
+                <Button Grid.Column="1" Content="Cancel" 
+                        Command="{Binding CancelCommand}"
+                        Margin="5,0,0,0" Padding="10,0"/>
+            </Grid>
+        </Grid>
+
+        <!-- Preview Area -->
+        <Border Grid.Row="2" 
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" 
+                BorderThickness="1" 
+                Margin="0,0,0,10">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                <TextBox Text="{Binding PreviewText, Mode=OneWay}"
+                         IsReadOnly="True"
+                         FontFamily="Consolas"
+                         BorderThickness="0"
+                         Padding="5"/>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Status Bar -->
+        <TextBlock Grid.Row="3" 
+                   Text="{Binding StatusMessage}"
+                   Margin="0,0,0,10"/>
+
+        <!-- Bottom Panel: Export Options -->
+        <StackPanel Grid.Row="4" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right">
+            <Button Content="Export" 
+                    Command="{Binding ExportCommand}"
+                    Width="100"
+                    Padding="5"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,93 @@
+# Visual Studio files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.log
+*.vspscc
+*.vssscc
+
+# Unreal Engine
+Saved/
+Intermediate/
+DerivedDataCache/
+.vscode/
+*.VC.db
+*.opensdf
+*.opendb
+*.sdf
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+Build/
+Binaries/
+Plugins/*/Intermediate/
+Plugins/*/Binaries/
+
+# Binary Files
+*.dll
+*.pdb
+*.exe
+
+# Unreal Generated Files
+*.generated.h
+*.generated.cpp
+*.generated.cpp.objd
+*.generated.cpp.obj
+*.generated.cpp.map
+*.generated.cpp.lstd
+
+# Content folder exceptions
+Content/Collections/
+Content/Developers/
+Content/__ExternalActors__/
+Content/__ExternalObjects__/
+
+# Package files
+*.uasset
+*.umap
+!Content/**/*.uasset
+!Content/**/*.umap
+
+# Cache files
+*.pid
+*.bsc
+*.cache
+*.ilk
+*.lib
+*.exp
+*.pch
+
+# OS Generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
