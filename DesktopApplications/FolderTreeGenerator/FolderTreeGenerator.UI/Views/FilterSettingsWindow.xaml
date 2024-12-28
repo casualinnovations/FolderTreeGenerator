@@ -8,7 +8,8 @@
         mc:Ignorable="d"
         Title="Filter Settings" Height="500" Width="600"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize">
+        ResizeMode="CanResize">
+	<ScrollViewer VerticalScrollBarVisibility="Auto">
 
 	<Grid Margin="10">
 		<Grid.RowDefinitions>
@@ -66,29 +67,46 @@
                             Command="{Binding AddExtensionCommand}"
                             Padding="10,5"/>
 				</Grid>
-
-				<ListBox Grid.Row="1"
-                         ItemsSource="{Binding IncludeExtensions}"
-                         Margin="0,5"
-                         MinHeight="100">
-					<ListBox.ItemTemplate>
-						<DataTemplate>
-							<Grid>
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="*"/>
-									<ColumnDefinition Width="Auto"/>
-								</Grid.ColumnDefinitions>
-								<TextBlock Text="{Binding}" VerticalAlignment="Center"/>
-								<Button Grid.Column="1" Content="Remove"
-                                        Command="{Binding DataContext.RemoveExtensionCommand, 
-                                                  RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                        CommandParameter="{Binding}"
-                                        Margin="5,0,0,0"
-                                        Padding="5,2"/>
-							</Grid>
-						</DataTemplate>
-					</ListBox.ItemTemplate>
-				</ListBox>
+				
+				<!-- Extensions DataGrid -->
+				<DataGrid Grid.Row="1"
+						  Margin="0,5"
+						  ItemsSource="{Binding IncludeExtensions}"
+						  AutoGenerateColumns="False"
+						  HeadersVisibility="Column"
+						  GridLinesVisibility="None"
+						  IsReadOnly="True"
+						  Background="Transparent"
+						  BorderThickness="1"
+						  CanUserAddRows="False"
+						  CanUserDeleteRows="False"
+						  CanUserReorderColumns="False"
+						  CanUserResizeRows="False"
+						  CanUserSortColumns="False">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="Extension"
+										  Binding="{Binding}"
+										  Width="*"/>
+						<DataGridTemplateColumn Header="Action"
+											  Width="Auto">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate>
+									<Button Content="Remove"
+											Command="{Binding DataContext.RemoveExtensionCommand, 
+                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+											CommandParameter="{Binding}"
+											Margin="5,2"
+											Padding="10,2"/>
+								</DataTemplate>
+							</DataGridTemplateColumn.CellTemplate>
+						</DataGridTemplateColumn>
+					</DataGrid.Columns>
+					<DataGrid.RowStyle>
+						<Style TargetType="DataGridRow">
+							<Setter Property="Background" Value="Transparent"/>
+						</Style>
+					</DataGrid.RowStyle>
+				</DataGrid>
 			</Grid>
 		</GroupBox>
 
@@ -113,7 +131,47 @@
                             Padding="10,5"/>
 				</Grid>
 
-				<ListBox Grid.Row="1"
+				<!-- Extensions DataGrid -->
+				<DataGrid Grid.Row="1"
+						  Margin="0,5"
+						  ItemsSource="{Binding ExcludedFolders}"
+						  AutoGenerateColumns="False"
+						  HeadersVisibility="Column"
+						  GridLinesVisibility="None"
+						  IsReadOnly="True"
+						  Background="Transparent"
+						  BorderThickness="1"
+						  CanUserAddRows="False"
+						  CanUserDeleteRows="False"
+						  CanUserReorderColumns="False"
+						  CanUserResizeRows="False"
+						  CanUserSortColumns="False">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="Folder"
+										  Binding="{Binding}"
+										  Width="*"/>
+						<DataGridTemplateColumn Header="Action"
+											  Width="Auto">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate>
+									<Button Content="Remove"
+											Command="{Binding DataContext.RemoveExcludedFolderCommand, 
+                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+											CommandParameter="{Binding}"
+											Margin="5,2"
+											Padding="10,2"/>
+								</DataTemplate>
+							</DataGridTemplateColumn.CellTemplate>
+						</DataGridTemplateColumn>
+					</DataGrid.Columns>
+					<DataGrid.RowStyle>
+						<Style TargetType="DataGridRow">
+							<Setter Property="Background" Value="Transparent"/>
+						</Style>
+					</DataGrid.RowStyle>
+				</DataGrid>
+
+				<!--<ListBox Grid.Row="1"
                          ItemsSource="{Binding ExcludedFolders}"
                          Margin="0,5">
 					<ListBox.ItemTemplate>
@@ -133,7 +191,7 @@
 							</Grid>
 						</DataTemplate>
 					</ListBox.ItemTemplate>
-				</ListBox>
+				</ListBox>-->
 			</Grid>
 		</GroupBox>
 
@@ -148,4 +206,5 @@
                     Padding="5"/>
 		</StackPanel>
 	</Grid>
+	</ScrollViewer>
 </Window>
