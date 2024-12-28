@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FolderTreeGenerator.UI", "FolderTreeGenerator\FolderTreeGenerator.UI\FolderTreeGenerator.UI.csproj", "{FC2B870D-19C6-45D8-91DE-1B8A370CE24B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FolderTreeGenerator.Core", "FolderTreeGenerator\FolderTreeGenerator.Core\FolderTreeGenerator.Core.csproj", "{36C529F9-743F-499B-8FB3-999855DECB58}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FC2B870D-19C6-45D8-91DE-1B8A370CE24B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC2B870D-19C6-45D8-91DE-1B8A370CE24B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC2B870D-19C6-45D8-91DE-1B8A370CE24B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC2B870D-19C6-45D8-91DE-1B8A370CE24B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36C529F9-743F-499B-8FB3-999855DECB58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36C529F9-743F-499B-8FB3-999855DECB58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36C529F9-743F-499B-8FB3-999855DECB58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36C529F9-743F-499B-8FB3-999855DECB58}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
