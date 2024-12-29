@@ -1,71 +1,75 @@
-﻿using System.Text.RegularExpressions;
+﻿// FolderTreeGenerator.Core/Services/GitignoreParser.cs
+// Purpose: Parses .gitignore files and checks if a path is ignored.
 
-namespace FolderTreeGenerator.Core.Services;
+using System.Text.RegularExpressions;
 
-public class GitignoreParser
+namespace FolderTreeGenerator.Core.Services
 {
-    private readonly List<(Regex regex, bool isNegative)> _patterns = new();
-
-    public void AddPattern(string pattern)
+    public class GitignoreParser
     {
-        if (string.IsNullOrWhiteSpace(pattern) || pattern.StartsWith('#'))
-            return;
+        private readonly List<(Regex regex, bool isNegative)> _patterns = new();
 
-        pattern = pattern.Trim();
-        var isNegative = pattern.StartsWith('!');
-        if (isNegative)
-            pattern = pattern[1..];
-
-        _patterns.Add((ConvertGitignoreToRegex(pattern), isNegative));
-    }
-
-    public void Clear()
-    {
-        _patterns.Clear();
-    }
-
-    public bool IsIgnored(string path)
-    {
-        path = path.Replace('\\', '/');
-        var isIgnored = false;
-
-        foreach (var (regex, isNegative) in _patterns)
+        public void AddPattern(string pattern)
         {
-            if (regex.IsMatch(path))
+            if (string.IsNullOrWhiteSpace(pattern) || pattern.StartsWith('#'))
+                return;
+
+            pattern = pattern.Trim();
+            var isNegative = pattern.StartsWith('!');
+            if (isNegative)
+                pattern = pattern[1..];
+
+            _patterns.Add((ConvertGitignoreToRegex(pattern), isNegative));
+        }
+
+        public void Clear()
+        {
+            _patterns.Clear();
+        }
+
+        public bool IsIgnored(string path)
+        {
+            path = path.Replace('\\', '/');
+            var isIgnored = false;
+
+            foreach (var (regex, isNegative) in _patterns)
             {
-                isIgnored = !isNegative;
+                if (regex.IsMatch(path))
+                {
+                    isIgnored = !isNegative;
+                }
             }
+
+            return isIgnored;
         }
 
-        return isIgnored;
-    }
-
-    private static Regex ConvertGitignoreToRegex(string pattern)
-    {
-        // Escape special regex characters
-        pattern = Regex.Escape(pattern);
-
-        // Convert gitignore glob patterns to regex
-        pattern = pattern
-            .Replace(@"\*\*/", "(.*/)?") // Match directory wildcard
-            .Replace(@"\*", "[^/]*")     // Match single-level wildcard
-            .Replace(@"\?", "[^/]")      // Match single character
-            .Replace(@"\[", "[")         // Allow character classes
-            .Replace(@"\]", "]");
-
-        // Handle trailing slash for directories
-        if (pattern.EndsWith(@"\/"))
+        private static Regex ConvertGitignoreToRegex(string pattern)
         {
-            pattern = pattern[..^2] + "(/.*)?$";
-        }
-        else
-        {
-            pattern += "(/.*)?$";
-        }
+            // Escape special regex characters
+            pattern = Regex.Escape(pattern);
 
-        // Make pattern match full path
-        pattern = "^" + pattern;
+            // Convert gitignore glob patterns to regex
+            pattern = pattern
+                .Replace(@"\*\*/", "(.*/)?") // Match directory wildcard
+                .Replace(@"\*", "[^/]*")     // Match single-level wildcard
+                .Replace(@"\?", "[^/]")      // Match single character
+                .Replace(@"\[", "[")         // Allow character classes
+                .Replace(@"\]", "]");
 
-        return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            // Handle trailing slash for directories
+            if (pattern.EndsWith(@"\/"))
+            {
+                pattern = pattern[..^2] + "(/.*)?$";
+            }
+            else
+            {
+                pattern += "(/.*)?$";
+            }
+
+            // Make pattern match full path
+            pattern = "^" + pattern;
+
+            return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        }
     }
 }

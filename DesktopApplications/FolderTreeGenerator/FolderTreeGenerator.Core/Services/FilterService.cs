@@ -1,89 +1,169 @@
-﻿using FolderTreeGenerator.Core.Interfaces;
+﻿// FolderTreeGenerator.Core/Services/FilterService.cs
+// purpose: Provide services for filtering files and folders based on various criteria
+
+using FolderTreeGenerator.Core.Interfaces;
 using FolderTreeGenerator.Core.Models;
 using System.IO;
-using System.Text.RegularExpressions;
+using System.Linq;
 
-namespace FolderTreeGenerator.Core.Services;
-
-public class FilterService : IFilterService
+namespace FolderTreeGenerator.Core.Services
 {
-    private readonly GitignoreParser _gitignoreParser = new();
-    private readonly IFileSystemService _fileSystem;
 
-    public FilterService(IFileSystemService fileSystem)
+    public class FilterService : IFilterService
     {
-        _fileSystem = fileSystem;
-    }
+        private readonly GitignoreParser _gitignoreParser = new();
+        private readonly IFileSystemService _fileSystem;
 
-    public async Task LoadGitignoreAsync(string path)
-    {
-        _gitignoreParser.Clear();
-        var content = await _fileSystem.ReadAllTextAsync(path);
-        foreach (var line in content.Split('\n'))
+        public FilterService(IFileSystemService fileSystem)
         {
-            _gitignoreParser.AddPattern(line);
+            _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         }
-    }
 
-    public void ClearGitignoreRules()
-    {
-        _gitignoreParser.Clear();
-    }
-
-    public async Task<bool> ShouldInclude(string path, FilterOptions options)
-    {
-        if (options == null) return true;
-
-        if (!options.ShowHiddenFiles && await _fileSystem.IsHiddenAsync(path))
-            return false;
-
-        if (options.UseGitignore && await IsExcludedByGitignoreAsync(path))
-            return false;
-
-        if (Directory.Exists(path))
+        /// <summary>
+        /// Loads gitignore rules from the specified path.
+        /// </summary>
+        public async Task LoadGitignoreAsync(string path)
         {
-            var dirName = Path.GetFileName(path);
-            if (options.ExcludedFolders.Contains(dirName))
-                return false;
-        }
-        else
-        {
-            var extension = Path.GetExtension(path)?.ToLowerInvariant();
-            if (extension != null)
+            ArgumentNullException.ThrowIfNull(path);
+
+            _gitignoreParser.Clear();
+            var content = await _fileSystem.ReadAllTextAsync(path);
+
+            foreach (var line in content.Split('\n'))
             {
-                if (options.IncludeExtensions.Any() && !options.IncludeExtensions.Contains(extension))
-                    return false;
-
-                if (options.ExcludeExtensions.Contains(extension))
-                    return false;
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    _gitignoreParser.AddPattern(line.Trim());
+                }
             }
         }
 
-        return true;
-    }
+        /// <summary>
+        /// Clears all loaded gitignore rules.
+        /// </summary>
+        public void ClearGitignoreRules()
+        {
+            _gitignoreParser.Clear();
+        }
 
-    public async Task<bool> IsExcludedByGitignoreAsync(string path)
-    {
-        return _gitignoreParser.IsIgnored(path);
-    }
+        /// <summary>
+        /// Determines whether a file should be included based on filter options.
+        /// </summary>
+        public async Task<bool> ShouldIncludeFileAsync(string path, FilterOptions options)
+        {
+            ArgumentNullException.ThrowIfNull(path);
+            ArgumentNullException.ThrowIfNull(options);
 
-    public async Task<bool> MatchesExtensionFilters(string path, FilterOptions options)
-    {
-        var extension = Path.GetExtension(path)?.ToLowerInvariant();
-        if (extension == null) return false;
+            // Check if path is hidden
+            if (!options.ShowHiddenFiles && await _fileSystem.IsHiddenAsync(path))
+            {
+                return false;
+            }
 
-        if (options.IncludeExtensions.Any())
-            return options.IncludeExtensions.Contains(extension);
+            // Check gitignore rules
+            if (options.UseGitignore && _gitignoreParser.IsIgnored(path))
+            {
+                return false;
+            }
 
-        return !options.ExcludeExtensions.Contains(extension);
-    }
+            // Check extension filters
+            var extension = Path.GetExtension(path).ToLowerInvariant();
 
-    public async Task<bool> MatchesDepthFilter(string path, string rootPath, FilterOptions options)
-    {
-        if (!options.MaxDepth.HasValue) return true;
+            // If include extensions are specified, only include files with those extensions
+            if (options.IncludeExtensions?.Any() == true)
+            {
+                return options.IncludeExtensions.Contains(extension);
+            }
 
-        var relativePath = Path.GetRelativePath(rootPath, path);
-        var depth = relativePath.Count(c => c == Path.DirectorySeparatorChar);
-        return depth <= options.MaxDepth.Value;
+            // If exclude extensions are specified, exclude files with those extensions
+            if (options.ExcludeExtensions?.Any() == true)
+            {
+                return !options.ExcludeExtensions.Contains(extension);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Determines whether a folder should be included based on filter options.
+        /// </summary>
+        public async Task<bool> ShouldIncludeFolderAsync(string path, FilterOptions options)
+        {
+            ArgumentNullException.ThrowIfNull(path);
+            ArgumentNullException.ThrowIfNull(options);
+
+            // Check if path is hidden
+            if (!options.ShowHiddenFiles && await _fileSystem.IsHiddenAsync(path))
+            {
+                return false;
+            }
+
+            // Check gitignore rules
+            if (options.UseGitignore && _gitignoreParser.IsIgnored(path))
+            {
+                return false;
+            }
+
+            // Check excluded folders
+            var folderName = Path.GetFileName(path);
+            return !options.ExcludedFolders?.Contains(folderName) ?? true;
+        }
+
+        /// <summary>
+        /// Checks if a path matches the maximum depth filter.
+        /// </summary>
+        public Task<bool> MatchesDepthFilterAsync(string path, string rootPath, FilterOptions options)
+        {
+            ArgumentNullException.ThrowIfNull(path);
+            ArgumentNullException.ThrowIfNull(rootPath);
+            ArgumentNullException.ThrowIfNull(options);
+
+            if (!options.MaxDepth.HasValue)
+            {
+                return Task.FromResult(true);
+            }
+
+            var relativePath = Path.GetRelativePath(rootPath, path);
+            var depth = relativePath.Count(c => c == Path.DirectorySeparatorChar);
+            return Task.FromResult(depth <= options.MaxDepth.Value);
+        }
+
+        /// <summary>
+        /// Checks if a path is excluded by gitignore rules.
+        /// </summary>
+        public Task<bool> IsExcludedByGitignoreAsync(string path)
+        {
+            ArgumentNullException.ThrowIfNull(path);
+            return Task.FromResult(_gitignoreParser.IsIgnored(path));
+        }
+
+        /// <summary>
+        /// Checks if a file extension matches the extension filters.
+        /// </summary>
+        public Task<bool> MatchesExtensionFiltersAsync(string path, FilterOptions options)
+        {
+            ArgumentNullException.ThrowIfNull(path);
+            ArgumentNullException.ThrowIfNull(options);
+
+            var extension = Path.GetExtension(path)?.ToLowerInvariant();
+            if (string.IsNullOrEmpty(extension))
+            {
+                return Task.FromResult(false);
+            }
+
+            // If include extensions are specified, only include files with those extensions
+            if (options.IncludeExtensions?.Any() == true)
+            {
+                return Task.FromResult(options.IncludeExtensions.Contains(extension));
+            }
+
+            // If exclude extensions are specified, exclude files with those extensions
+            if (options.ExcludeExtensions?.Any() == true)
+            {
+                return Task.FromResult(!options.ExcludeExtensions.Contains(extension));
+            }
+
+            return Task.FromResult(true);
+        }
     }
 }

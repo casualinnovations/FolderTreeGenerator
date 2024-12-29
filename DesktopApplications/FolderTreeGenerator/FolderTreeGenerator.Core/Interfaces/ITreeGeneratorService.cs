@@ -1,24 +1,28 @@
-﻿using FolderTreeGenerator.Core.Models;
+﻿// FolderTreeGenerator.Core/Interfaces/ITreeGeneratorService.cs
+// Purpose: Define the ITreeGeneratorService interface
 
-namespace FolderTreeGenerator.Core.Interfaces;
+using FolderTreeGenerator.Core.Models;
 
-public interface ITreeGeneratorService
+namespace FolderTreeGenerator.Core.Interfaces
 {
-    Task<TreeNode> GenerateTreeAsync(
-        string rootPath,
-        FilterOptions filterOptions,
-        GeneratorOptions generatorOptions,
-        IProgress<(int current, int total, string currentItem)>? progress = null,
-        CancellationToken cancellationToken = default);
+    public interface ITreeGeneratorService
+    {
+        Task<TreeNode> GenerateTreeAsync(
+            string rootPath,
+            FilterOptions filterOptions,
+            GeneratorOptions generatorOptions,
+            IProgress<(int current, int total, string currentItem)>? progress = null,
+            CancellationToken cancellationToken = default);
 
-    Task<string> GenerateOutputAsync(
-        TreeNode tree,
-        GeneratorOptions options,
-        CancellationToken cancellationToken = default);
+        Task<string> GenerateOutputAsync(
+            TreeNode tree,
+            GeneratorOptions options,
+            CancellationToken cancellationToken = default);
 
-    Task ExportAsync(
-        TreeNode tree,
-        string outputPath,
-        GeneratorOptions options,
-        CancellationToken cancellationToken = default);
+        Task ExportAsync(
+            TreeNode tree,
+            string outputPath,
+            GeneratorOptions options,
+            CancellationToken cancellationToken = default);
+    }
 }

@@ -1,3 +1,5 @@
+<!-- FolderTreeGenerator.Core.csproj -->
+<!-- This is the project file for the Core project. It uses the .NET SDK and targets .NET 8.0 for Windows. -->
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>

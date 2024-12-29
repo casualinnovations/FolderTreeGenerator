@@ -1,4 +1,6 @@
-﻿using FolderTreeGenerator.Core.Interfaces;
+﻿// App.xaml.cs
+// purpose: Provide the entry point for the application
+using FolderTreeGenerator.Core.Interfaces;
 using FolderTreeGenerator.Core.Services;
 using FolderTreeGenerator.UI.ViewModels;
 using FolderTreeGenerator.UI.Views;
@@ -23,7 +25,8 @@ public partial class App : Application
         // Register Core Services
         services.AddSingleton<IFileSystemService, FileSystemService>();
         services.AddSingleton<IFilterService, FilterService>();
-        services.AddSingleton<ITreeGeneratorService, TreeGeneratorService>();
+        services.AddSingleton<ITreeGeneratorService, TreeGeneratorService>(); 
+        services.AddSingleton<IConfigurationService, ConfigurationService>();
 
         // Register ViewModels
         services.AddSingleton<FilterSettingsViewModel>();

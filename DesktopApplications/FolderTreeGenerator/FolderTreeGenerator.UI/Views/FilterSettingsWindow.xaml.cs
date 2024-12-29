@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿// Views/FilterSettingsWindow.xaml.cs
+// purpose: Provide the code-behind for the FilterSettingsWindow view
+using System.Windows;
 using FolderTreeGenerator.UI.ViewModels;
 
 namespace FolderTreeGenerator.UI.Views;
@@ -12,6 +14,7 @@ public partial class FilterSettingsWindow : Window
         InitializeComponent();
         _viewModel = viewModel;
         this.DataContext = _viewModel;
+        _viewModel.RequestClose += () => DialogResult = true;
     }
 
     public void SetOwner(Window owner)

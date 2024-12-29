@@ -1,4 +1,5 @@
-﻿<Application x:Class="FolderTreeGenerator.UI.App"
+﻿<!-- App.xaml - this file is used to define global styles and resources for the application. -->
+<Application x:Class="FolderTreeGenerator.UI.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:FolderTreeGenerator.UI">

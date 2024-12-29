@@ -1,4 +1,6 @@
-﻿using FolderTreeGenerator.UI.ViewModels;
+﻿// Views/MainWindow.xaml.cs
+// purpose: Provide the code-behind for the MainWindow view
+using FolderTreeGenerator.UI.ViewModels;
 using FolderTreeGenerator.UI.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
@@ -18,6 +20,7 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
 
         _viewModel.OpenFilterSettingsRequested += OnOpenFilterSettings;
+        _viewModel.RequestClose += () => Close();
     }
 
     private void OnOpenFilterSettings()

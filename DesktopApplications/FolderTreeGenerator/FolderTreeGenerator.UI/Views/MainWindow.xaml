@@ -4,7 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FolderTreeGenerator.UI"
-        xmlns:vm="clr-namespace:FolderTreeGenerator.UI.ViewModels"
+        xmlns:vm="clr-namespace:FolderTreeGenerator.UI.ViewModels" 
+        d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
         mc:Ignorable="d"
         Title="Folder Tree Generator" Height="600" Width="900"
         WindowStartupLocation="CenterScreen">
@@ -90,10 +91,14 @@
         <StackPanel Grid.Row="4" 
                     Orientation="Horizontal" 
                     HorizontalAlignment="Right">
-            <Button Content="Export" 
+            <Button Content="Export"
                     Command="{Binding ExportCommand}"
                     Width="100"
-                    Padding="5"/>
+                    Margin="0,0,10,0"/>
+            <Button Content="Close"
+                    Command="{Binding CloseCommand}"
+                    Width="100"
+                    Margin="0,0,10,0"/>
         </StackPanel>
     </Grid>
 </Window>

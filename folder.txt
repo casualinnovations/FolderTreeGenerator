@@ -1,0 +1,42 @@
+Tools
+│
+├── .gitignore
+├── folder.txt
+├── FolderStructure.ps1
+└── DesktopApplications
+    ├── DesktopApplications.sln
+    ├── README.md
+    └── FolderTreeGenerator
+        ├── FolderTreeGenerator.Core
+        │   ├── FolderTreeGenerator.Core.csproj
+        │   ├── Interfaces
+        │   │   ├── IConfigurationService.cs
+        │   │   ├── IFileSystemService.cs
+        │   │   ├── IFilterService.cs
+        │   │   └── ITreeGeneratorService.cs
+        │   ├── Models
+        │   │   ├── AppSettings.cs
+        │   │   ├── FilterOptions.cs
+        │   │   ├── GeneratorOptions.cs
+        │   │   └── TreeNode.cs
+        │   └── Services
+        │       ├── ConfigurationService.cs
+        │       ├── FileSystemService.cs
+        │       ├── FilterService.cs
+        │       ├── GitignoreParser.cs
+        │       └── TreeGeneratorService.cs
+        └── FolderTreeGenerator.UI
+            ├── App.xaml
+            ├── App.xaml.cs
+            ├── AssemblyInfo.cs
+            ├── FolderTreeGenerator.UI.csproj
+            ├── FolderTreeGenerator.UI.csproj.user
+            ├── Converters
+            ├── ViewModels
+            │   ├── FilterSettingsViewModel.cs
+            │   └── MainWindowViewModel.cs
+            └── Views
+                ├── FilterSettingsWindow.xaml
+                ├── FilterSettingsWindow.xaml.cs
+                ├── MainWindow.xaml
+                └── MainWindow.xaml.cs

@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿// MainWindowViewModel.cs
+// purpose: Provide the view model for the MainWindow view
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -7,14 +8,16 @@ using System.IO;
 using FolderTreeGenerator.Core.Interfaces;
 using FolderTreeGenerator.Core.Models;
 using Microsoft.Win32;
+using FolderTreeGenerator.Core.Services;
 
 namespace FolderTreeGenerator.UI.ViewModels;
 
-public class MainWindowViewModel : INotifyPropertyChanged
+public class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 {
+    private readonly IConfigurationService _configService;
+    private string? _selectedFolder;
     private readonly ITreeGeneratorService _treeGenerator;
     private readonly IFileSystemService _fileSystem;
-    private string? _selectedFolder;
     private string? _previewText;
     private bool _isGenerating;
     private double _progress;
@@ -23,22 +26,30 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private CancellationTokenSource? _cancellationTokenSource;
 
     public event Action? OpenFilterSettingsRequested;
+    public event Action? RequestClose;
+
+    public ICommand CloseCommand { get; }
 
     public MainWindowViewModel(
         ITreeGeneratorService treeGenerator,
         IFileSystemService fileSystem,
-        FilterSettingsViewModel filterSettings)
+        FilterSettingsViewModel filterSettings,
+        IConfigurationService configService)
     {
         _treeGenerator = treeGenerator;
         _fileSystem = fileSystem;
         _filterSettings = filterSettings;
+        _configService = configService;
 
         BrowseFolderCommand = new RelayCommand(_ => BrowseFolder());
         ExportCommand = new RelayCommand(_ => Export(), _ => !string.IsNullOrEmpty(PreviewText));
         CancelCommand = new RelayCommand(_ => Cancel(), _ => IsGenerating);
         OpenFilterSettingsCommand = new RelayCommand(_ => OpenFilterSettings());
+        CloseCommand = new RelayCommand(_ => RequestClose?.Invoke());
 
         PropertyChanged += OnPropertyChanged;
+
+        LoadSettingsAsync().FireAndForgetSafeAsync();
     }
 
     public string? SelectedFolder
@@ -48,6 +59,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             if (SetProperty(ref _selectedFolder, value))
             {
+                SaveSettingsAsync().FireAndForgetSafeAsync();
                 GenerateTreeAsync().FireAndForgetSafeAsync();
             }
         }
@@ -223,6 +235,44 @@ public class MainWindowViewModel : INotifyPropertyChanged
         field = value;
         OnPropertyChanged(propertyName);
         return true;
+    }
+    private async Task LoadSettingsAsync()
+    {
+        try
+        {
+            var settings = await _configService.LoadSettingsAsync();
+            if (!string.IsNullOrEmpty(settings.LastDirectory) &&
+                Directory.Exists(settings.LastDirectory))
+            {
+                SelectedFolder = settings.LastDirectory;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error loading settings: {ex}");
+            StatusMessage = "Error loading saved settings";
+        }
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        try
+        {
+            var settings = await _configService.LoadSettingsAsync();
+            settings.LastDirectory = SelectedFolder;
+            await _configService.SaveSettingsAsync(settings);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error saving settings: {ex}");
+            StatusMessage = "Error saving settings";
+        }
+    }
+
+    public void Dispose()
+    {
+        _cancellationTokenSource?.Dispose();
+        SaveSettingsAsync().Wait();
     }
 }
 

@@ -1,4 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<!-- FolderTreeGenerator.UI.csproj -->
+<!-- This is the project file for the UI project. It references the Core project and uses WPF. -->
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
@@ -6,6 +8,7 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
+		<SupportedOSPlatform>windows</SupportedOSPlatform>
 	</PropertyGroup>
 
 	<ItemGroup>

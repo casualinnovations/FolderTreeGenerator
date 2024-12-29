@@ -1,16 +1,20 @@
-﻿using System.IO;
+﻿// FolderTreeGenerator.Core/Interfaces/IFileSystemService.cs
+// purpose: Define the IFileSystemService interface
 
-namespace FolderTreeGenerator.Core.Interfaces;
+using System.IO;
 
-public interface IFileSystemService
+namespace FolderTreeGenerator.Core.Interfaces
 {
-    Task<bool> DirectoryExistsAsync(string path);
-    Task<string[]> GetFilesAsync(string path, CancellationToken cancellationToken = default);
-    Task<string[]> GetDirectoriesAsync(string path, CancellationToken cancellationToken = default);
-    Task<FileInfo> GetFileInfoAsync(string path);
-    Task<DirectoryInfo> GetDirectoryInfoAsync(string path);
-    Task<string> ReadAllTextAsync(string path);
-    Task WriteAllTextAsync(string path, string content);
-    Task<bool> IsHiddenAsync(string path);
-    Task<string?> FindGitignoreAsync(string startPath);
+    public interface IFileSystemService
+    {
+        Task<bool> DirectoryExistsAsync(string path);
+        Task<string[]> GetFilesAsync(string path, CancellationToken cancellationToken = default);
+        Task<string[]> GetDirectoriesAsync(string path, CancellationToken cancellationToken = default);
+        Task<FileInfo> GetFileInfoAsync(string path);
+        Task<DirectoryInfo> GetDirectoryInfoAsync(string path);
+        Task<string> ReadAllTextAsync(string path);
+        Task WriteAllTextAsync(string path, string content);
+        Task<bool> IsHiddenAsync(string path);
+        Task<string?> FindGitignoreAsync(string startPath);
+    }
 }

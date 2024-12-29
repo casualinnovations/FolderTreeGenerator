@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
 using System.Text.Json;
 using FolderTreeGenerator.Core.Interfaces;
 using FolderTreeGenerator.Core.Models;
@@ -12,8 +13,8 @@ public class TreeGeneratorService : ITreeGeneratorService
 
     public TreeGeneratorService(IFileSystemService fileSystem, IFilterService filter)
     {
-        _fileSystem = fileSystem;
-        _filter = filter;
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+        _filter = filter ?? throw new ArgumentNullException(nameof(filter));
     }
 
     public async Task<TreeNode> GenerateTreeAsync(
@@ -23,27 +24,58 @@ public class TreeGeneratorService : ITreeGeneratorService
         IProgress<(int current, int total, string currentItem)>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var rootInfo = await _fileSystem.GetDirectoryInfoAsync(rootPath);
-        var root = new TreeNode
-        {
-            Name = rootInfo.Name,
-            FullPath = rootInfo.FullName,
-            IsFile = false,
-            Depth = 0,
-            LastModified = rootInfo.LastWriteTime
-        };
+        ArgumentNullException.ThrowIfNull(rootPath);
+        ArgumentNullException.ThrowIfNull(filterOptions);
 
-        await PopulateTreeAsync(root, filterOptions, progress, cancellationToken);
-        return root;
+        // Check if directory exists
+        if (!await _fileSystem.DirectoryExistsAsync(rootPath))
+        {
+            throw new DirectoryNotFoundException($"Directory not found: {rootPath}");
+        }
+
+        // Load gitignore if enabled
+        if (filterOptions.UseGitignore)
+        {
+            var gitignorePath = await _fileSystem.FindGitignoreAsync(rootPath);
+            if (gitignorePath != null)
+            {
+                await _filter.LoadGitignoreAsync(gitignorePath);
+            }
+        }
+
+        try
+        {
+            var rootInfo = await _fileSystem.GetDirectoryInfoAsync(rootPath);
+            var root = new TreeNode
+            {
+                Name = rootInfo.Name,
+                FullPath = rootInfo.FullName,
+                IsFile = false,
+                Depth = 0,
+                LastModified = rootInfo.LastWriteTime
+            };
+
+            await PopulateTreeAsync(root, rootPath, filterOptions, progress, cancellationToken);
+            return root;
+        }
+        finally
+        {
+            if (filterOptions.UseGitignore)
+            {
+                _filter.ClearGitignoreRules();
+            }
+        }
     }
 
     private async Task PopulateTreeAsync(
         TreeNode node,
+        string rootPath,
         FilterOptions options,
         IProgress<(int current, int total, string currentItem)>? progress,
         CancellationToken cancellationToken)
     {
-        if (options.MaxDepth.HasValue && node.Depth >= options.MaxDepth.Value)
+        // Check depth limit
+        if (!await _filter.MatchesDepthFilterAsync(node.FullPath, rootPath, options))
             return;
 
         var files = await _fileSystem.GetFilesAsync(node.FullPath, cancellationToken);
@@ -53,15 +85,15 @@ public class TreeGeneratorService : ITreeGeneratorService
         var current = 0;
 
         // Process files
-        foreach (var file in files.OrderBy(f => f))
+        foreach (var filePath in files.OrderBy(f => f))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            progress?.Report((++current, total, file));
+            progress?.Report((++current, total, filePath));
 
-            if (!await _filter.ShouldInclude(file, options))
+            if (!await _filter.ShouldIncludeFileAsync(filePath, options))
                 continue;
 
-            var fileInfo = await _fileSystem.GetFileInfoAsync(file);
+            var fileInfo = await _fileSystem.GetFileInfoAsync(filePath);
             node.AddChild(new TreeNode
             {
                 Name = fileInfo.Name,
@@ -74,15 +106,15 @@ public class TreeGeneratorService : ITreeGeneratorService
         }
 
         // Process directories
-        foreach (var dir in directories.OrderBy(d => d))
+        foreach (var dirPath in directories.OrderBy(d => d))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            progress?.Report((++current, total, dir));
+            progress?.Report((++current, total, dirPath));
 
-            if (!await _filter.ShouldInclude(dir, options))
+            if (!await _filter.ShouldIncludeFolderAsync(dirPath, options))
                 continue;
 
-            var dirInfo = await _fileSystem.GetDirectoryInfoAsync(dir);
+            var dirInfo = await _fileSystem.GetDirectoryInfoAsync(dirPath);
             var childNode = new TreeNode
             {
                 Name = dirInfo.Name,
@@ -92,27 +124,31 @@ public class TreeGeneratorService : ITreeGeneratorService
                 LastModified = dirInfo.LastWriteTime
             };
 
-            await PopulateTreeAsync(childNode, options, progress, cancellationToken);
+            await PopulateTreeAsync(childNode, rootPath, options, progress, cancellationToken);
 
             if (options.IncludeEmpty || childNode.Children.Any())
                 node.AddChild(childNode);
         }
     }
 
-    public async Task<string> GenerateOutputAsync(
+    public Task<string> GenerateOutputAsync(
         TreeNode tree,
         GeneratorOptions options,
         CancellationToken cancellationToken = default)
     {
-        return options.Format switch
+        ArgumentNullException.ThrowIfNull(tree);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var output = options.Format switch
         {
             OutputFormat.PlainText => GeneratePlainText(tree, options),
             OutputFormat.Markdown => GenerateMarkdown(tree, options),
-            OutputFormat.Json => GenerateJson(tree, options),
-            OutputFormat.Xml => GenerateXml(tree, options),
-            OutputFormat.Html => await GenerateHtmlAsync(tree, options),
+            OutputFormat.Json => GenerateJson(tree),
+            OutputFormat.Xml => GenerateXml(tree),
             _ => throw new ArgumentException($"Unsupported format: {options.Format}")
         };
+
+        return Task.FromResult(output);
     }
 
     public async Task ExportAsync(
@@ -125,7 +161,7 @@ public class TreeGeneratorService : ITreeGeneratorService
         await _fileSystem.WriteAllTextAsync(outputPath, content);
     }
 
-    private string GeneratePlainText(TreeNode node, GeneratorOptions options, string prefix = "")
+    private static string GeneratePlainText(TreeNode node, GeneratorOptions options, string prefix = "")
     {
         var sb = new StringBuilder();
         if (string.IsNullOrEmpty(prefix))
@@ -140,7 +176,9 @@ public class TreeGeneratorService : ITreeGeneratorService
             var isLast = i == node.Children.Count - 1;
             var currentPrefix = isLast ? "└── " : "├── ";
 
-            sb.Append(prefix).Append(currentPrefix).Append(child.Name);
+            sb.Append(prefix)
+              .Append(currentPrefix)
+              .Append(child.Name);
 
             if (options.IncludeMetadata)
             {
@@ -161,7 +199,7 @@ public class TreeGeneratorService : ITreeGeneratorService
         return sb.ToString();
     }
 
-    private string GenerateMarkdown(TreeNode node, GeneratorOptions options)
+    private static string GenerateMarkdown(TreeNode node, GeneratorOptions options)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"# {node.Name}");
@@ -169,7 +207,7 @@ public class TreeGeneratorService : ITreeGeneratorService
         return sb.ToString();
     }
 
-    private void GenerateMarkdownLines(TreeNode node, string indent, StringBuilder sb, GeneratorOptions options)
+    private static void GenerateMarkdownLines(TreeNode node, string indent, StringBuilder sb, GeneratorOptions options)
     {
         foreach (var child in node.Children)
         {
@@ -190,7 +228,7 @@ public class TreeGeneratorService : ITreeGeneratorService
         }
     }
 
-    private string GenerateJson(TreeNode tree, GeneratorOptions options)
+    private static string GenerateJson(TreeNode tree)
     {
         return JsonSerializer.Serialize(tree, new JsonSerializerOptions
         {
@@ -198,16 +236,9 @@ public class TreeGeneratorService : ITreeGeneratorService
         });
     }
 
-    private string GenerateXml(TreeNode tree, GeneratorOptions options)
+    private static string GenerateXml(TreeNode tree)
     {
-        // Implementation omitted for brevity
-        throw new NotImplementedException();
-    }
-
-    private async Task<string> GenerateHtmlAsync(TreeNode tree, GeneratorOptions options)
-    {
-        // Implementation omitted for brevity
-        throw new NotImplementedException();
+        throw new NotImplementedException("XML output format is not yet implemented.");
     }
 
     private static string FormatSize(long bytes)

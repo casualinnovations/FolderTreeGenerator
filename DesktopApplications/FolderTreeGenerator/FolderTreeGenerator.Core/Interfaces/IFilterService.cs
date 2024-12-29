@@ -1,13 +1,18 @@
-﻿using FolderTreeGenerator.Core.Models;
+﻿// FolderTreeGenerator.Core/Interfaces/IFilterService.cs
+// Purpose: Interface for the filter service used to filter files and folders.
 
-namespace FolderTreeGenerator.Core.Interfaces;
+using FolderTreeGenerator.Core.Models;
 
-public interface IFilterService
+namespace FolderTreeGenerator.Core.Interfaces
 {
-    Task LoadGitignoreAsync(string path);
-    Task<bool> ShouldInclude(string path, FilterOptions options);
-    void ClearGitignoreRules();
-    Task<bool> IsExcludedByGitignoreAsync(string path);
-    Task<bool> MatchesExtensionFilters(string path, FilterOptions options);
-    Task<bool> MatchesDepthFilter(string path, string rootPath, FilterOptions options);
+    public interface IFilterService
+    {
+        Task LoadGitignoreAsync(string path);
+        void ClearGitignoreRules();
+        Task<bool> ShouldIncludeFileAsync(string path, FilterOptions options);
+        Task<bool> ShouldIncludeFolderAsync(string path, FilterOptions options);
+        Task<bool> MatchesDepthFilterAsync(string path, string rootPath, FilterOptions options);
+        Task<bool> IsExcludedByGitignoreAsync(string path);
+        Task<bool> MatchesExtensionFiltersAsync(string path, FilterOptions options);
+    }
 }
