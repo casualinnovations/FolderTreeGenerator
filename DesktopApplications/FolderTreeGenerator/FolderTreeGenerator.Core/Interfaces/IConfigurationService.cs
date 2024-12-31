@@ -7,5 +7,6 @@ namespace FolderTreeGenerator.Core.Interfaces
     {
         Task<AppSettings> LoadSettingsAsync();
         Task SaveSettingsAsync(AppSettings settings);
+        Task ResetToDefaultsAsync();
     }
 }

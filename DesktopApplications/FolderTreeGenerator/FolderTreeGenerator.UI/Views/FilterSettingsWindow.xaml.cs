@@ -14,7 +14,7 @@ public partial class FilterSettingsWindow : Window
         InitializeComponent();
         _viewModel = viewModel;
         this.DataContext = _viewModel;
-        _viewModel.RequestClose += () => DialogResult = true;
+        _viewModel.RequestClose += () => Close();
     }
 
     public void SetOwner(Window owner)

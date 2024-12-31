@@ -38,7 +38,9 @@ public class FilterSettingsViewModel : INotifyPropertyChanged
 
         // Initialize commands
         SaveCommand = new RelayCommand(_ => SaveSettings());
+        CloseCommand = new RelayCommand(_ => RequestClose?.Invoke());
         ClearFiltersCommand = new RelayCommand(_ => ClearAllFilters());
+        ResetToDefaultsCommand = new RelayCommand(async _ => await ResetToDefaults());
         AddExtensionCommand = new RelayCommand(_ => AddExtension(), _ => !string.IsNullOrWhiteSpace(NewExtension));
         RemoveExtensionCommand = new RelayCommand(extension => RemoveExtension((string)extension!));
         AddExcludedFolderCommand = new RelayCommand(_ => AddExcludedFolder(), _ => !string.IsNullOrWhiteSpace(NewExcludedFolder));
@@ -49,8 +51,15 @@ public class FilterSettingsViewModel : INotifyPropertyChanged
     }
     public ICommand SaveCommand { get; }
     public ICommand ClearFiltersCommand { get; }
+    public ICommand ResetToDefaultsCommand { get; }
+    public ICommand CloseCommand { get; }
 
     public event Action? RequestClose;
+    private async Task ResetToDefaults()
+    {
+        await _configService.ResetToDefaultsAsync();
+        await LoadSettingsAsync();
+    }
 
     private async Task LoadSettingsAsync()
     {
@@ -118,7 +127,6 @@ public class FilterSettingsViewModel : INotifyPropertyChanged
     private void SaveSettings()
     {
         SaveSettingsAsync().FireAndForgetSafeAsync();
-        RequestClose?.Invoke();
     }
 
     private void ClearAllFilters()

@@ -25,13 +25,17 @@
                     Command="{Binding SaveCommand}"
                     Width="80"
                     Margin="0,0,10,0"/>
+            <Button Content="Reset to Defaults"
+                    Command="{Binding ResetToDefaultsCommand}"
+                    Width="100"
+                    Margin="0,0,10,0"/>
             <Button Content="Clear Filters"
                     Command="{Binding ClearFiltersCommand}"
                     Width="80"
                     Margin="0,0,10,0"/>
             <Button Content="Close"
-                    IsCancel="True"
-                    Width="80"
+                    Command="{Binding CloseCommand}"
+                    Width="100"
                     Margin="0,0,10,0"/>
         </StackPanel>
 

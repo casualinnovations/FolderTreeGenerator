@@ -1,51 +1,145 @@
-﻿// FolderTreeGenerator.Core/Services/ConfigurationService.cs
-// Purpose: Service for loading and saving application settings.
-
+﻿// ConfigurationService.cs
 using FolderTreeGenerator.Core.Interfaces;
 using FolderTreeGenerator.Core.Models;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 
-namespace FolderTreeGenerator.Core.Services
+public class ConfigurationService : IConfigurationService
 {
-    public class ConfigurationService : IConfigurationService
+    private readonly string _configPath;
+    private readonly string _defaultConfigPath;
+    private readonly JsonSerializerOptions _jsonOptions;
+
+    public ConfigurationService()
     {
-        private readonly string _configPath;
+        // Get the application's base directory
+        var appFolder = AppDomain.CurrentDomain.BaseDirectory;
+        var configFolder = Path.Combine(appFolder, "config");
 
-        public ConfigurationService()
+        // Ensure config directory exists
+        Directory.CreateDirectory(configFolder);
+
+        _configPath = Path.Combine(configFolder, "settings.json");
+        _defaultConfigPath = Path.Combine(configFolder, "default-settings.json");
+
+        _jsonOptions = new JsonSerializerOptions
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var appFolder = Path.Combine(appData, "FolderTreeGenerator");
-            Directory.CreateDirectory(appFolder);
-            _configPath = Path.Combine(appFolder, "settings.json");
+            WriteIndented = true,
+            PropertyNameCaseInsensitive = true
+        };
+
+        // Create default settings file if it doesn't exist
+        if (!File.Exists(_defaultConfigPath))
+        {
+            SaveDefaultSettingsAsync().Wait();
         }
+    }
 
-        public async Task<AppSettings> LoadSettingsAsync()
+    private async Task SaveDefaultSettingsAsync()
+    {
+        try
         {
-            if (!File.Exists(_configPath))
-            {
-                return new AppSettings();
-            }
+            var defaults = DefaultSettings.CreateDefault();
+            var json = JsonSerializer.Serialize(defaults, _jsonOptions);
+            await File.WriteAllTextAsync(_defaultConfigPath, json);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error saving default settings: {ex}");
+            throw; // Rethrow as this is a critical initialization error
+        }
+    }
 
-            try
+    public async Task<AppSettings> LoadSettingsAsync()
+    {
+        try
+        {
+            if (File.Exists(_configPath))
             {
                 var json = await File.ReadAllTextAsync(_configPath);
-                var settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
-                return settings;
+                var settings = JsonSerializer.Deserialize<AppSettings>(json, _jsonOptions);
+                return settings ?? await LoadDefaultSettingsAsync();
             }
-            catch (Exception)
-            {
-                return new AppSettings();
-            }
-        }
 
-        public async Task SaveSettingsAsync(AppSettings settings)
+            return await LoadDefaultSettingsAsync();
+        }
+        catch (Exception ex)
         {
-            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
+            Debug.WriteLine($"Error loading settings: {ex}");
+            return await LoadDefaultSettingsAsync();
+        }
+    }
+
+    private async Task<AppSettings> LoadDefaultSettingsAsync()
+    {
+        try
+        {
+            if (File.Exists(_defaultConfigPath))
             {
-                WriteIndented = true
-            });
-            await File.WriteAllTextAsync(_configPath, json);
+                var json = await File.ReadAllTextAsync(_defaultConfigPath);
+                var defaults = JsonSerializer.Deserialize<DefaultSettings>(json, _jsonOptions);
+                if (defaults != null)
+                {
+                    return new AppSettings
+                    {
+                        FilterOptions = defaults.Filters,
+                        LastDirectory = null
+                    };
+                }
+            }
+
+            // If default settings file doesn't exist or is invalid, 
+            // create new defaults from code
+            var defaultSettings = DefaultSettings.CreateDefault();
+            return new AppSettings
+            {
+                FilterOptions = defaultSettings.Filters,
+                LastDirectory = null
+            };
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error loading default settings: {ex}");
+            // Fall back to hardcoded defaults
+            return new AppSettings
+            {
+                FilterOptions = DefaultSettings.CreateDefault().Filters
+            };
+        }
+    }
+
+    public async Task SaveSettingsAsync(AppSettings settings)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(settings, _jsonOptions);
+            // Write to temporary file first to prevent corruption
+            var tempPath = Path.GetTempFileName();
+            await File.WriteAllTextAsync(tempPath, json);
+            File.Move(tempPath, _configPath, true);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error saving settings: {ex}");
+            throw;
+        }
+    }
+
+    public async Task ResetToDefaultsAsync()
+    {
+        try
+        {
+            if (File.Exists(_configPath))
+            {
+                File.Delete(_configPath);
+            }
+            await SaveSettingsAsync(await LoadDefaultSettingsAsync());
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error resetting settings: {ex}");
+            throw;
         }
     }
 }
